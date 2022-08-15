@@ -1,0 +1,29 @@
+version: "3"
+services:
+  master:
+    image: postgres:12-bullseye
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: "postgres" # Specify the database user name
+      POSTGRES_PASSWORD: "P0stgres" # Specify the user password
+      POSTGRES_DB: "dvdrental" # Specify the database name
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C" # Specify encoding and locale
+    volumes:
+      - ./master:/docker-entrypoint-initdb.d
+  replica:
+    image: postgres:12-bullseye
+    depends_on:
+      - master # Specify the order of service startup
+    deploy:
+      replicas: 3 # Specify the number of replicas
+      restart_policy:
+        condition: on-failure
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_USER: postgres # Specify the database user name
+      POSTGRES_PASSWORD: P0stgres # Specify the user password
+    volumes:
+      - ./replica:/docker-entrypoint-initdb.d
+

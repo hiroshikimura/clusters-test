@@ -1,0 +1,3 @@
+FROM postgis/postgis:12-3.2
+
+COPY 20_configure_replication_replica.sh /docker-entrypoint-initdb.d/

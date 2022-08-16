@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -f /var/lib/postgresql/data/.init_cluster_master]; then
+  exit
+fi
+
 # Replication settings
 sed -i -e 's/#wal_level = replica/wal_level = replica/g' /var/lib/postgresql/data/postgresql.conf
 sed -i -e 's/#max_wal_senders = 10/max_wal_senders = 10/g' /var/lib/postgresql/data/postgresql.conf
@@ -9,3 +13,4 @@ echo "host replication replication 0.0.0.0/0 trust" >> "/var/lib/postgresql/data
 # Create users for replication
 psql -U postgres -c "CREATE ROLE replication WITH REPLICATION PASSWORD 'replication' LOGIN"
 
+echo `date` >> /var/lib/postgresql/data/.init_cluster_master

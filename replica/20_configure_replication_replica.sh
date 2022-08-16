@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -f /var/lib/postgresql/data/.init_cluster_replica]; then
+  exit
+fi
+
 # Database shutdwon
 /usr/lib/postgresql/12/bin/pg_ctl -D "/var/lib/postgresql/data" -m fast -w stop
 sleep 20
@@ -16,3 +20,4 @@ sed -i -e 's/#hot_standby = on/hot_standby = on/g' /var/lib/postgresql/data/post
 # Database startup
 /usr/lib/postgresql/12/bin/pg_ctl -D "/var/lib/postgresql/data" -w start
 
+echo `date` >> /var/lib/postgresql/data/.init_cluster_replica

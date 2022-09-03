@@ -12,6 +12,8 @@ services:
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C" # Specify encoding and locale
     volumes:
       - postgis-master:/var/lib/postgresql/data
+    networks:
+      - osanpo_network
   replica:
     # image: postgis/postgis:12-3.2
     image: hiroshikimura/postgis-replication-replica:0.1.0
@@ -30,6 +32,40 @@ services:
     #   - ./replica:/docker-entrypoint-initdb.d
     volumes:
       - postgis-replica:/var/lib/postgresql/data
+    networks:
+      - osanpo_network
+  app:
+    image: redmine.local:5000/kimura/osanpo-server:test
+    depends_on:
+      - replica
+    environment:
+      DATABASE_URL_MASTER: "postgis://postgres:P0stgres@master:5432/osanpo-server"
+      DATABASE_URL_REPLICA: "postgis://postgres:P0stgres@replica:5432/osanpo-server"
+      RAILS_ENV: "production"
+    command: >
+      bundle exec rails db:create && \
+      bundle exec rails db:migrate && \
+      bundle exec rails s -p 3000 -b '0.0.0.0'
+    ports:
+      - "127.0.0.1:5001:3000"
+    networks:
+      - osanpo_network
+  fluentd:
+    image: fluent/fluentd:latest
+    restart: always
+    command: >
+      /usr/bin/fluentd -c /fluentd/etc/fluent.conf -v
+    ports:
+      - "127.0.0.1:24224:24224"
+      - "127.0.0.1:24224:24224/udp"
+    volumes:
+      - fluentlog:/fluentd/log
+      - ${PWD}/fluentd/fluent.conf:/fluentd/etc/fluent.conf:ro
+    networks:
+      - osanpo_network
+networks:
+  osanpo_network:
 volumes:
   postgis-master:
   postgis-replica:
+  fluentlog:
